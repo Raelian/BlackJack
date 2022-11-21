@@ -1,0 +1,483 @@
+#include <iostream>
+#include <cstring>
+#include <ctype.h>
+#include <algorithm>
+#include <list>
+#include <queue>
+#include <cstdlib>
+#include <ctime>
+#include <windows.h>
+using namespace std;
+using std::string;
+
+struct Card{
+    int key;       //1, 2, ... or 52
+    char suit[10];      //cupa, romb, trefla or pica
+    char symbol[10];    //simbol carti
+    int ranking;      // 2, ... or 14
+    Card *next;
+};
+
+class CardDeck{
+    private:
+        Card *first = NULL;
+
+        int numberOfCards;
+
+        void makeDeck(int num) {
+            for(int i = 1; i <= num; i++) {
+                Card *temp = new Card;
+                temp->key = i;
+
+                if(i % 13 == 0)
+                    temp->ranking = 14;
+                else
+                    temp->ranking = (i % 13) + 1;
+
+                if(i <= 13) {
+                    strcpy(temp->suit, "Hearts");
+                    strcpy(temp->symbol, "\x03");
+                } else if(i <= 26) {
+                    strcpy(temp->suit, "Diamonds");
+                    strcpy(temp->symbol, "\x04");
+                } else if(i <= 39) {
+                    strcpy(temp->suit, "Clubs");
+                    strcpy(temp->symbol, "\x05");
+                } else {
+                    strcpy(temp->suit, "Spades");
+                    strcpy(temp->symbol, "\x06");
+                }
+
+
+                temp->next = NULL;
+
+                if(first == NULL) first = temp;
+                else {
+                    Card *findNull = first;
+                    while(findNull->next != NULL)
+                        findNull = findNull->next;
+                    findNull->next = temp;
+                }
+            }
+        }
+
+        void shuffleDeck(int numCards) {
+            int i;
+            std::vector<int> deckOfCards = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                            11, 12, 13, 14, 15, 16, 17, 18,
+                                            19, 20, 21, 22, 23, 24, 25, 26,
+                                            27, 28, 29, 30, 31, 32, 33, 34,
+                                            35, 36, 37, 38, 39, 40, 41, 42,
+                                            43, 44, 45, 46, 47, 48, 49, 50,
+                                            51, 52};
+
+            std::srand(std::time(0));
+            std::random_shuffle(deckOfCards.begin(), deckOfCards.end());
+
+            Card *start = first;
+            while(start) {
+                start->key = deckOfCards.back();
+                start = start->next;
+                deckOfCards.pop_back();
+            }
+        }
+
+    public:
+        CardDeck(){
+            numberOfCards = 52;
+
+            makeDeck(numberOfCards);
+
+            showDeck();
+
+            shuffleDeck(numberOfCards);
+        }
+
+        ~CardDeck(){
+            while(first) {
+                Card *temp = first;
+                first = first->next;
+                delete temp;
+            }
+        }
+
+        Card* addCardToHand(Card *&hand, Card *&card) {
+            if(hand == NULL) {
+                hand = card;
+                hand->next = NULL;
+            } else {
+                Card *temp = hand;
+                while(temp->next != NULL) temp = temp->next;
+                temp->next = card;
+                temp->next->next = NULL;
+            }
+            return 0;
+        }
+
+        Card* popCard(int cardNum, Card *&hand){
+            Card *deleteCard = new Card;
+            if(first->key == cardNum){
+                deleteCard = first;
+                first = first->next;
+                addCardToHand(hand, deleteCard);
+            } else {
+                Card *temp = first;
+                while(temp->next->key != cardNum) temp = temp->next;
+                deleteCard = temp->next;
+                temp->next = temp->next->next;
+                addCardToHand(hand, deleteCard);
+            }
+            isEmpty();
+            return deleteCard;
+        }
+
+        int* isEmpty(){
+            int counter = 1;
+            if(!first) {
+                cout << "There are no more cards left!" << endl;
+                cout << "The game will end now." << endl;
+                abort();
+            }
+            return 0;
+        }
+
+        int checkHand(int total, Card *&hand) {
+            Card *temp = hand;
+            if(total <= 21) return total;
+            else if(temp->ranking == 11) {
+                temp->ranking = 1;
+                total -= 10;
+                return total;
+            } else {
+                while(temp != NULL) {
+                    while(temp->ranking != 11 || temp != NULL) {
+                        temp = temp->next;
+                        if(temp == NULL) {
+                            return total;
+                        } else if(temp->ranking == 11) {
+                            temp->ranking = 1;
+                            total -= 10;
+                            return total;
+                        }
+                    }
+                }
+            }
+            return total;
+        }
+
+        int cardValue(int num) {
+            int value;
+            if(num > 11) {
+                switch(num) {
+                    case 12:
+                        value = 10;
+                        break;
+                    case 13:
+                        value = 10;
+                        break;
+                    case 14:
+                        value = 10;
+                        break;
+                }
+                return value;
+            } else return num;
+        }
+
+        string trueRanking(int num) {
+            string name;
+            switch(num) {
+                case 1:
+                    name = "Ace";
+                    break;
+                case 2:
+                    name = "Two";
+                    break;
+                case 3:
+                    name = "Three";
+                    break;
+                case 4:
+                    name = "Four";
+                    break;
+                case 5:
+                    name = "Five";
+                    break;
+                case 6:
+                    name = "Six";
+                    break;
+                case 7:
+                    name = "Seven";
+                    break;
+                case 8:
+                    name = "Eight";
+                    break;
+                case 9:
+                    name = "Nine";
+                    break;
+                case 10:
+                    name = "Ten";
+                    break;
+                case 11:
+                    name = "Ace";
+                    break;
+                case 12:
+                    name = "Jack";
+                    break;
+                case 13:
+                    name = "Queen";
+                    break;
+                case 14:
+                    name = "King";
+                    break;
+                default:
+                    name = "ERROR";
+            }
+            return name;
+        }
+
+        void showDeck() {
+            Card *temp = first;
+            while(temp) {
+                cout << temp->key <<". " << trueRanking(temp->ranking) << " of " << temp->suit << " " << temp->symbol << endl;
+                temp = temp->next;
+                Sleep(50);
+            }
+            cout << endl;
+            delete temp;
+        }
+
+        void showHand(Card *hand) {
+            int i = 1;
+            Card *temp = hand;
+            while(temp) {
+                cout << i++ << ". " << trueRanking(temp->ranking) << " of " << temp->suit << " " << temp->symbol << endl;
+                temp = temp->next;
+            }
+            delete temp;
+            cout << endl;
+        }
+
+        void emptyHand(Card *&hand) {
+            while(hand) {
+                Card *temp = hand;
+                //cout << "DELETING CARD" << endl;
+                //cout << trueRanking(temp->ranking) << " of " << temp->suit << " " << temp->symbol << endl;
+                hand = hand->next;
+                delete temp;
+            }
+        }
+
+        void playBlackJack(int rounds, string playerName) {
+            int cardNumber = 1, i = 0, playerWins = 0, dealerWins = 0;
+            string upperName = playerName;
+            std::transform(upperName.begin(), upperName.end(), upperName.begin(), ::toupper);
+
+            while(++i <= rounds) {
+                Card *showCard = new Card;
+                Card *player = NULL;
+                Card *dealer = NULL;
+                int playerHand = 0, playerTotal = 0, dealerTotal = 0, dealerHand = 0;
+                cout << "     --------------" << endl;
+                cout << "     Round " << i << " starts" << endl;
+                cout << "     --------------" << endl << endl;
+                Sleep(1000);
+                cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+
+                cout << "Dealer draws two cards for "<< playerName << ": " << endl << endl;
+                showCard = popCard(cardNumber++, player);
+                playerHand++;
+                playerTotal += cardValue(showCard->ranking);
+                cout << playerHand <<". " << trueRanking(showCard->ranking) << " of " << showCard->suit << " " << showCard->symbol << endl;
+
+                showCard = popCard(cardNumber++, player);
+                playerHand++;
+                playerTotal += cardValue(showCard->ranking);
+                cout << playerHand <<". " << trueRanking(showCard->ranking) << " of " << showCard->suit << " " << showCard->symbol << endl;
+
+                playerTotal = checkHand(playerTotal, player);
+                cout << playerName << " has a total of " << playerTotal << endl;
+                if(playerTotal == 21) cout << "BLACK JACK!" << endl;
+                cout << endl << endl;
+                Sleep(1000);
+                cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+
+                cout << "Dealer draws two cards for himself: " << endl << endl;
+
+                showCard = popCard(cardNumber++, dealer);
+                dealerHand++;
+                dealerTotal += cardValue(showCard->ranking);
+                cout << dealerHand <<". " << "~face down card~" << endl;
+                Card *hiddenCard = showCard;
+
+                showCard = popCard(cardNumber++, dealer);
+                dealerHand++;
+                dealerTotal += cardValue(showCard->ranking);
+                cout << dealerHand <<". " << trueRanking(showCard->ranking) << " of " << showCard->suit << " " << showCard->symbol << endl;
+                dealerTotal = checkHand(dealerTotal, dealer) - cardValue(hiddenCard->ranking);
+
+                cout << "Dealer has a total of " << dealerTotal << endl;
+                cout << endl;
+                cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl << endl;
+                Sleep(1000);
+
+                if(playerTotal < 21) cout << "It's " << playerName << "'s turn to choose: " << endl;
+                else if(playerTotal == dealerTotal) cout << "It's a draw since both have BLACK JACK." << endl;
+                else cout << playerName << " has BLACK JACK so it's the dealer's turn:" << endl;
+
+                while(playerHand != 5 && playerTotal < 21) {
+                    std::string command;
+                    cout << endl;
+                    cout << "Choose: hit or stand?" << endl;
+                    cin >> command;
+                    std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+                    cout << endl;
+                    if(command.compare("hit") == 0) {
+                        cout << playerName << " chose hit." << endl;
+                        cout << "Dealer draws a card for " << playerName << " ." << endl;
+                        showCard = popCard(cardNumber++, player);
+                        playerHand++;
+                        playerTotal += cardValue(showCard->ranking);
+                        cout << playerHand <<". " << trueRanking(showCard->ranking) << " of " << showCard->suit << " " << showCard->symbol << endl;
+                        cout << endl;
+                        cout << "     -=| " << upperName <<"'s HAND |=-" << endl << endl;
+                        playerTotal = checkHand(playerTotal, player);
+                        showHand(player);
+                    } else if(command.compare("stand") == 0) {
+                        cout << playerName << " chose stand." << endl;
+                        cout << playerName << "'s turn ends." << endl;
+                        playerHand = 5;
+                    } else cout << "Wrong command, please try again." << endl;
+                    if(playerTotal > 21) playerTotal = checkHand(playerTotal, player);
+                    cout << playerName << "'s total is " << playerTotal << endl;
+                    if(playerTotal == 21) cout << "BLACK JACK!" << endl;
+                    Sleep(1000);
+                }
+                cout << endl;
+                cout << "-------------------------------------" << endl;
+                Sleep(1000);
+
+                cout << "Dealer reveals card faced down, it's the " << trueRanking(hiddenCard->ranking) << " of " << hiddenCard->suit << " " << hiddenCard->symbol << endl;
+                dealerTotal = dealerTotal + cardValue(hiddenCard->ranking);
+                if(dealerTotal > 21) dealerTotal = checkHand(dealerTotal, dealer);
+                cout << "Dealer's total is " << dealerTotal << endl;
+                if(dealerTotal == 21) cout << "BLACK JACK!" << endl;
+                Sleep(1000);
+                if(playerTotal <= 21){
+                    while(dealerHand != 5 && dealerTotal < 21) {
+                        if(playerTotal > dealerTotal) {
+                            cout << endl;
+                            cout << "Dealer chose hit." << endl;
+                            cout << "Dealer draws a card for himself." << endl;
+                            Sleep(1000);
+                            showCard = popCard(cardNumber++, dealer);
+                            dealerHand++;
+                            dealerTotal += cardValue(showCard->ranking);
+                            cout << dealerHand <<". " << trueRanking(showCard->ranking) << " of " << showCard->suit << " " << showCard->symbol << endl;
+                            cout << endl;
+                            Sleep(1000);
+                            cout << "     -=| DEALER'S HAND |=-" << endl << endl;
+                            dealerTotal = checkHand(dealerTotal, dealer);
+                            showHand(dealer);
+                            Sleep(1000);
+                        } else if(playerTotal < dealerTotal) {
+                            cout << "Dealer chose stand." << endl;
+                            cout << "Dealer's turn ends." << endl;
+                            dealerHand = 5;
+                            Sleep(1000);
+                        } else if(playerTotal == dealerTotal) {
+                            if(dealerTotal >= 16) {
+                                cout << "Dealer chose stand." << endl;
+                                cout << "Dealer's turn ends." << endl;
+                                dealerHand = 5;
+                                Sleep(1000);
+                            } else if(dealerTotal <= 15) {
+                                cout << endl;
+                                cout << "Dealer chose hit." << endl;
+                                cout << "Dealer draws a card for himself." << endl;
+                                Sleep(1000);
+                                showCard = popCard(cardNumber++, dealer);
+                                dealerHand++;
+                                dealerTotal += cardValue(showCard->ranking);
+                                cout << dealerHand <<". " << trueRanking(showCard->ranking) << " of " << showCard->suit << " " << showCard->symbol << endl;
+                                Sleep(1000);
+                                cout << endl;
+                                cout << "     ---------------" << endl;
+                                cout << "     |DEALER'S HAND|" << endl;
+                                cout << "     ---------------" << endl << endl;
+                                dealerTotal = checkHand(dealerTotal, dealer);
+                                showHand(dealer);
+                                Sleep(1000);
+                            }
+                        }
+                        if(dealerTotal > 21) dealerTotal = checkHand(dealerTotal, dealer);
+                        cout << "Dealer's total is " << dealerTotal << endl;
+                        if(dealerTotal == 21) cout << "BLACK JACK!" << endl;
+                        Sleep(1000);
+                    }
+                }
+
+                if(playerTotal > 21){
+                    dealerWins++;
+                    cout << "Dealer won the round." << endl;
+                } else if(dealerTotal > 21) {
+                    playerWins++;
+                    cout << playerName << " won the round." << endl;
+                } else if(playerTotal > dealerTotal){
+                    playerWins++;
+                    cout << playerName << " won the round." << endl;
+                } else if(playerTotal < dealerTotal){
+                    dealerWins++;
+                    cout << "Dealer won the round." << endl;
+                } else {
+                    cout << "It's a draw!" << endl;
+                }
+                emptyHand(player);
+                emptyHand(dealer);
+                cout << "--------------------------------------" << endl;
+                cout << "The score is: " << playerName << " " << playerWins << " - " << " Dealer " << dealerWins << endl;
+                cout << "--------------------------------------" << endl << endl;
+                Sleep(2000);
+                if(i != rounds) {
+                    int counter = 4;
+                    cout << "     Starting next round";
+                    Sleep(1000);
+                    while(--counter) {
+                        cout << ".";
+                        Sleep(1000);
+                    }
+                    cout << endl << endl << endl;
+                }
+            }
+            Sleep(500);
+            if(playerWins > dealerWins) cout << "        " << upperName << " WINS!" << endl;
+            else if(dealerWins > playerWins) cout << "        DEALER WINS!" << endl;
+            else if(playerWins == dealerWins) cout << "        IT'S A DRAW" << endl;
+            else cout << "        ERROR!" << endl;
+            cout << endl;
+            cout << "       ||=========||" << endl;
+            cout << "       ||GAME OVER||" << endl;
+            cout << "       ||=========||" << endl;
+        }
+};
+
+int main(){
+    int numberOfRounds = 0;
+    std::string playerName;
+    cout << "-----Black Jack-----" << endl << endl;
+    Sleep(1000);
+    cout << "Dealer: What is your name?" << endl;
+    cin >> playerName;
+    Sleep(1000);
+    cout << endl;
+    cout << "Dealer: How many rounds of Black Jack do you wish to play?" << endl;
+    cout << "Number of rounds: " << endl;
+    cin >> numberOfRounds;
+    Sleep(1000);
+    cout << endl;
+    cout << "*the Dealer takes out a new pack of cards and spreads them over the table in a line*" << endl << endl;
+    Sleep(1000);
+    CardDeck myDeck;
+    Sleep(1000);
+    cout << "*the Dealer retrieves the cards and starts to shuffle them*" << endl << endl;
+    Sleep(1000);
+    myDeck.playBlackJack(numberOfRounds, playerName);
+}
